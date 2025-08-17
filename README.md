@@ -52,8 +52,9 @@ The library is available on the `window` object as `kickChat`.
 ```html
 <script src="https://cdn.jsdelivr.net/npm/kichat.js/dist/kichat.js.browser-global.min.js"></script>
 <script>
-    const client = new kickChat.KickChat();
+    const client = new kichat.KiChatjs()
     client.on('connected', () => console.log('Connected!'));
+    client.on('join', (data) => console.log(`Successfully joined channel: ${data.info.slug}`))
     client.connect();
     client.join('xqc');
 </script>
