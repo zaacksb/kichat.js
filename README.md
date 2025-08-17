@@ -50,7 +50,7 @@ client.connect();
 The library is available on the `window` object as `kickChat`.
 
 ```html
-<script src="/dist/kickChat.browser-global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/kichat.js/dist/kichat.js.browser-global.min.js"></script>
 <script>
     const client = new kickChat.KickChat();
     client.on('connected', () => console.log('Connected!'));
