@@ -1,8 +1,8 @@
 export { KiChannel } from './lib/KiChannel';
-import { KickChat } from './KickChat';
-export { KickChat, type ClientOptions, type ClientEvents } from './KickChat';
+import { KiChatjs } from './KiChatjs';
+export { KiChatjs, type ClientOptions, type ClientEvents } from './KiChatjs';
 export * from './types/events';
 declare const _default: {
-    KickChat: typeof KickChat;
+    KiChatjs: typeof KiChatjs;
 };
 export default _default;

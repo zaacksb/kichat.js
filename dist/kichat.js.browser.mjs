@@ -65,7 +65,7 @@ var KiChannel = class {
   }
 };
 
-// src/KickChat.ts
+// src/KiChatjs.ts
 import { URLSearchParams } from "url";
 
 // src/lib/EventEmitter.ts
@@ -101,7 +101,7 @@ var EventEmitter = class {
   }
 };
 
-// src/KickChat.ts
+// src/KiChatjs.ts
 var parseJSON = (json) => {
   try {
     return JSON.parse(json);
@@ -110,7 +110,7 @@ var parseJSON = (json) => {
   }
 };
 var BASE_URL = "wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679";
-var KickChat = class extends EventEmitter {
+var KiChatjs = class extends EventEmitter {
   socket;
   wasCloseCalled = false;
   reconnectAttempts = 0;
@@ -141,7 +141,7 @@ var KickChat = class extends EventEmitter {
       throw new Error("Client is already connected.");
     }
     this.wasCloseCalled = false;
-    this.createWebSocket().catch((err) => this.emit("error", err));
+    this.createWebSocket().catch((err) => this.emit("socketError", err));
   }
   async createWebSocket() {
     const urlParams = new URLSearchParams({
@@ -163,7 +163,7 @@ var KickChat = class extends EventEmitter {
       this.socket.on("open", () => this.onSocketOpen());
       this.socket.on("message", (data) => this.onSocketMessage(data));
       this.socket.on("close", (code, reason) => this.onSocketClose(code, reason.toString()));
-      this.socket.on("error", (error) => this.onSocketError(error));
+      this.socket.on("socketError", (error) => this.onSocketError(error));
     }
   }
   close() {
@@ -177,7 +177,7 @@ var KickChat = class extends EventEmitter {
       this.socket.close();
     }
     if (this.reconnectAttempts >= this.reconnectMaxAttempts) {
-      this.emit("error", new Error("Maximum reconnect attempts reached."));
+      this.emit("socketError", new Error("Maximum reconnect attempts reached."));
       return;
     }
     this.reconnectAttempts++;
@@ -199,7 +199,7 @@ var KickChat = class extends EventEmitter {
     }
   }
   onSocketError(error) {
-    this.emit("error", error);
+    this.emit("socketError", error);
   }
   onSocketMessage(rawData) {
     const messageStr = rawData.toString();
@@ -422,11 +422,11 @@ var KickChat = class extends EventEmitter {
       if (ch) {
         this.channelsByChatroomId.delete(ch.chatroomId);
       }
-      this.emit("error", error);
+      this.emit("socketError", error);
       throw error;
     }
   }
-  part(channelName) {
+  leave(channelName) {
     const normalizedName = KiChannel.toLogin(channelName);
     const channel = this.channels.get(normalizedName);
     if (channel) {
@@ -439,7 +439,7 @@ var KickChat = class extends EventEmitter {
       }
       this.channels.delete(normalizedName);
       this.channelsByChatroomId.delete(channel.chatroomId);
-      this.emit("part", channel, "Disconnected by user");
+      this.emit("leave", channel, "Disconnected by user");
     }
   }
   waitForEvent(event, filter, timeoutMs = 1e4) {
@@ -462,11 +462,11 @@ var KickChat = class extends EventEmitter {
 
 // src/index.ts
 var src_default = {
-  KickChat
+  KiChatjs
 };
 export {
   KiChannel,
-  KickChat,
+  KiChatjs,
   src_default as default
 };
 //# sourceMappingURL=kichat.js.browser.mjs.map

@@ -26,7 +26,7 @@ var KiChannel = class {
   }
 };
 
-// src/KickChat.ts
+// src/KiChatjs.ts
 import { URLSearchParams } from "url";
 
 // src/lib/EventEmitter.ts
@@ -50,14 +50,14 @@ var EventEmitter = class {
   }
 };
 
-// src/KickChat.ts
+// src/KiChatjs.ts
 var parseJSON = (json) => {
   try {
     return JSON.parse(json);
   } catch {
     return null;
   }
-}, BASE_URL = "wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679", KickChat = class extends EventEmitter {
+}, BASE_URL = "wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679", KiChatjs = class extends EventEmitter {
   socket;
   wasCloseCalled = !1;
   reconnectAttempts = 0;
@@ -79,7 +79,7 @@ var parseJSON = (json) => {
   connect() {
     if (this.isConnected())
       throw new Error("Client is already connected.");
-    this.wasCloseCalled = !1, this.createWebSocket().catch((err) => this.emit("error", err));
+    this.wasCloseCalled = !1, this.createWebSocket().catch((err) => this.emit("socketError", err));
   }
   async createWebSocket() {
     let urlParams = new URLSearchParams({
@@ -92,7 +92,7 @@ var parseJSON = (json) => {
       this.socket = new window.WebSocket(url), this.socket.onopen = () => this.onSocketOpen(), this.socket.onmessage = (event) => this.onSocketMessage(event.data), this.socket.onclose = (event) => this.onSocketClose(event.code, event.reason), this.socket.onerror = () => this.onSocketError(new Error("WebSocket error"));
     else {
       let { default: NodeWebSocket } = await import("ws");
-      this.socket = new NodeWebSocket(url), this.socket.on("open", () => this.onSocketOpen()), this.socket.on("message", (data) => this.onSocketMessage(data)), this.socket.on("close", (code, reason) => this.onSocketClose(code, reason.toString())), this.socket.on("error", (error) => this.onSocketError(error));
+      this.socket = new NodeWebSocket(url), this.socket.on("open", () => this.onSocketOpen()), this.socket.on("message", (data) => this.onSocketMessage(data)), this.socket.on("close", (code, reason) => this.onSocketClose(code, reason.toString())), this.socket.on("socketError", (error) => this.onSocketError(error));
     }
   }
   close() {
@@ -100,7 +100,7 @@ var parseJSON = (json) => {
   }
   async reconnect() {
     if (this.isConnected() && this.socket.close(), this.reconnectAttempts >= this.reconnectMaxAttempts) {
-      this.emit("error", new Error("Maximum reconnect attempts reached."));
+      this.emit("socketError", new Error("Maximum reconnect attempts reached."));
       return;
     }
     this.reconnectAttempts++;
@@ -114,7 +114,7 @@ var parseJSON = (json) => {
     clearInterval(this.pingInterval), !this.wasCloseCalled && this.reconnectEnabled ? this.reconnect() : this.emit("disconnected", reason || `Socket closed with code ${code}`);
   }
   onSocketError(error) {
-    this.emit("error", error);
+    this.emit("socketError", error);
   }
   onSocketMessage(rawData) {
     let messageStr = rawData.toString();
@@ -305,12 +305,12 @@ var parseJSON = (json) => {
     } catch (error) {
       this.channels.delete(normalizedName);
       let ch = Array.from(this.channelsByChatroomId.values()).find((c) => c.slug === normalizedName);
-      throw ch && this.channelsByChatroomId.delete(ch.chatroomId), this.emit("error", error), error;
+      throw ch && this.channelsByChatroomId.delete(ch.chatroomId), this.emit("socketError", error), error;
     }
   }
-  part(channelName) {
+  leave(channelName) {
     let normalizedName = KiChannel.toLogin(channelName), channel = this.channels.get(normalizedName);
-    channel && (this.isConnected() && (this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, "unsubscribe"), this.sendPusher(`chatroom_${channel.chatroomId}`, "unsubscribe"), this.sendPusher(`channel_${channel.id}`, "unsubscribe"), this.sendPusher(`channel.${channel.id}`, "unsubscribe"), this.sendPusher(`predictions-channel-${channel.id}`, "unsubscribe")), this.channels.delete(normalizedName), this.channelsByChatroomId.delete(channel.chatroomId), this.emit("part", channel, "Disconnected by user"));
+    channel && (this.isConnected() && (this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, "unsubscribe"), this.sendPusher(`chatroom_${channel.chatroomId}`, "unsubscribe"), this.sendPusher(`channel_${channel.id}`, "unsubscribe"), this.sendPusher(`channel.${channel.id}`, "unsubscribe"), this.sendPusher(`predictions-channel-${channel.id}`, "unsubscribe")), this.channels.delete(normalizedName), this.channelsByChatroomId.delete(channel.chatroomId), this.emit("leave", channel, "Disconnected by user"));
   }
   waitForEvent(event, filter, timeoutMs = 1e4) {
     return new Promise((resolve, reject) => {
@@ -326,11 +326,11 @@ var parseJSON = (json) => {
 
 // src/index.ts
 var src_default = {
-  KickChat
+  KiChatjs
 };
 export {
   KiChannel,
-  KickChat,
+  KiChatjs,
   src_default as default
 };
 //# sourceMappingURL=kichat.js.node.mjs.map

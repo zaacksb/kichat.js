@@ -14,9 +14,9 @@ export type ConnectionEvents = {
     connected: [];
     disconnected: [reason: string];
     reconnecting: [];
-    error: [error: Error];
+    socketError: [error: Error];
     join: [channel: KiChannel];
-    part: [channel: KiChannel, reason?: string];
+    leave: [channel: KiChannel, reason?: string];
 };
 export type ChatEvents = {
     message: [message: KickEvents.MessageData, channel: KiChannel];
@@ -53,7 +53,7 @@ export type ChatEvents = {
 export type ClientEvents = ConnectionEvents & ChatEvents & {
     raw: [data: string];
 };
-export declare class KickChat extends EventEmitter<ClientEvents> {
+export declare class KiChatjs extends EventEmitter<ClientEvents> {
     socket?: WebSocket | NodeWebSocket;
     private wasCloseCalled;
     private reconnectAttempts;
@@ -83,6 +83,6 @@ export declare class KickChat extends EventEmitter<ClientEvents> {
     private startPing;
     private subscribeToChannel;
     join(channelName: string): Promise<KiChannel>;
-    part(channelName: string): void;
+    leave(channelName: string): void;
     private waitForEvent;
 }
