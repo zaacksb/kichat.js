@@ -1,5 +1,4 @@
 
-import { URLSearchParams } from "url";
 import EventEmitter from "./lib/EventEmitter";
 import { KiChannel, ChannelInfo, ChatroomInfo } from "./lib/KiChannel";
 import * as KickEvents from "./types/events";

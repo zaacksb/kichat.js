@@ -23,7 +23,6 @@ const node: BuildOptions = {
 const browser: BuildOptions = {
 	platform: 'browser',
 	entryPoints: { 'kichat.js': entryFile },
-	external: ['url'],
 };
 
 const esm: BuildOptions = {
@@ -43,7 +42,7 @@ const cjs: BuildOptions = {
 
 const iife: BuildOptions = {
 	format: 'iife',
-	globalName: 'kichat.js',
+	globalName: 'kichat',
 	outExtension: { '.js': '.js' },
 };
 

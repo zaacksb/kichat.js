@@ -1,19 +1,12 @@
 "use strict";
-var kichat;
-(kichat ||= {}).js = (() => {
+var kichat = (() => {
   var __create = Object.create;
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __getProtoOf = Object.getPrototypeOf;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
-    get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
-  }) : x)(function(x) {
-    if (typeof require !== "undefined") return require.apply(this, arguments);
-    throw Error('Dynamic require of "' + x + '" is not supported');
-  });
-  var __commonJS = (cb, mod) => function __require2() {
+  var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
   var __export = (target, all) => {
@@ -86,9 +79,6 @@ var kichat;
       return this.name;
     }
   };
-
-  // src/KiChatjs.ts
-  var import_url = __require("url");
 
   // src/lib/EventEmitter.ts
   var EventEmitter = class {
@@ -166,7 +156,7 @@ var kichat;
       this.createWebSocket().catch((err) => this.emit("socketError", err));
     }
     async createWebSocket() {
-      const urlParams = new import_url.URLSearchParams({
+      const urlParams = new URLSearchParams({
         protocol: "7",
         client: "js",
         version: "7.4.0",

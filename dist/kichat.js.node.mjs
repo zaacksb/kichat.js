@@ -26,9 +26,6 @@ var KiChannel = class {
   }
 };
 
-// src/KiChatjs.ts
-import { URLSearchParams } from "url";
-
 // src/lib/EventEmitter.ts
 var EventEmitter = class {
   listeners = /* @__PURE__ */ new Map();

@@ -59,9 +59,6 @@ var KiChannel = class {
   }
 };
 
-// src/KiChatjs.ts
-var import_url = require("url");
-
 // src/lib/EventEmitter.ts
 var EventEmitter = class {
   listeners = /* @__PURE__ */ new Map();
@@ -115,7 +112,7 @@ var parseJSON = (json) => {
     this.wasCloseCalled = !1, this.createWebSocket().catch((err) => this.emit("socketError", err));
   }
   async createWebSocket() {
-    let urlParams = new import_url.URLSearchParams({
+    let urlParams = new URLSearchParams({
       protocol: "7",
       client: "js",
       version: "7.4.0",
