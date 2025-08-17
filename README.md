@@ -1,8 +1,8 @@
-# kick-chat
+# kichat.js
 
-[![NPM Version](https://img.shields.io/npm/v/kick-chat.svg?style=flat)](https://www.npmjs.org/package/kick-chat)
-[![NPM Downloads](https://img.shields.io/npm/dm/kick-chat.svg?style=flat)](https://www.npmjs.org/package/kick-chat)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/zaacksb/kickChat-gemini/test.yml?branch=main&style=flat)](https://github.com/zaacksb/kickChat-gemini/actions)
+[![NPM Version](https://img.shields.io/npm/v/kichat.js.svg?style=flat)](https://www.npmjs.org/package/kichat.js)
+[![NPM Downloads](https://img.shields.io/npm/dm/kichat.js.svg?style=flat)](https://www.npmjs.org/package/kichat.js)
+<!-- [![Build Status](https://img.shields.io/github/actions/workflow/status/zaacksb/kickChat-gemini/test.yml?branch=main&style=flat)](https://github.com/zaacksb/kickChat-gemini/actions) -->
 
 A robust JavaScript library to connect to Kick.com's chat, designed to work seamlessly in both Node.js and browser environments.
 
@@ -19,11 +19,11 @@ A robust JavaScript library to connect to Kick.com's chat, designed to work seam
 ### Node.js
 
 ```bash
-npm i kick-chat
+npm i kichat.js
 ```
 
 ```javascript
-import { KickChat } from 'kick-chat';
+import { KickChat } from 'kichat.js';
 
 const client = new KickChat();
 
