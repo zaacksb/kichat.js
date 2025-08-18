@@ -5,7 +5,12 @@ const client = new KiChatjs({
     reconnect: true, // default is true
     reconnectMaxAttempts: 5, // default is Infinity
     reconnectInitialTimeout: 1_000, 
-    reconnectMaxTimeout: 30_000 // default is 60_000
+    reconnectMaxTimeout: 30_000, // default is 60_000
+    subscribePusher: {
+        channel: true,
+        chatRoom: true,
+        predictions: true
+    }
 })
 client.connect()
 
@@ -32,6 +37,7 @@ client.on('leave', (data, reason) => {
     console.log('disconnected ', data.info.slug, reason)
 })
 
+client.on('raw', console.log)
 client.on('message', (message, channel) => {
     const sender = message.sender.username
     const content = message.content

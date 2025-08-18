@@ -132,6 +132,7 @@ export interface ChatroomInfo {
 export class KiChannel {
   public info: ChannelInfo;
   public chatroom: ChatroomInfo;
+  public connectionNotified: boolean = false
 
   constructor(info: ChannelInfo, chatroom: ChatroomInfo) {
     this.info = info;
@@ -153,6 +154,14 @@ export class KiChannel {
   get chatroomId(): number {
     return this.info.chatroom.id;
   }
+
+  get notified(): boolean {
+    return this.connectionNotified
+  }
+  
+  set notified(value: boolean) {
+     this.connectionNotified = value
+   }
 
   static toLogin(channelName: string) {
     const name = channelName.trim().toLowerCase();

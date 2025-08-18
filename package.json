@@ -1,6 +1,6 @@
 {
   "name": "kichat.js",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A JavaScript library to connect to Kick.com chat.",
   "keywords": [
     "kick",

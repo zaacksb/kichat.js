@@ -123,11 +123,14 @@ export interface ChatroomInfo {
 export declare class KiChannel {
     info: ChannelInfo;
     chatroom: ChatroomInfo;
+    connectionNotified: boolean;
     constructor(info: ChannelInfo, chatroom: ChatroomInfo);
     get id(): number;
     get name(): string;
     get slug(): string;
     get chatroomId(): number;
+    get notified(): boolean;
+    set notified(value: boolean);
     static toLogin(channelName: string): string;
     toString(): string;
 }

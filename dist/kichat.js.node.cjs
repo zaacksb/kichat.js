@@ -35,6 +35,7 @@ module.exports = __toCommonJS(src_exports);
 var KiChannel = class {
   info;
   chatroom;
+  connectionNotified = !1;
   constructor(info, chatroom) {
     this.info = info, this.chatroom = chatroom;
   }
@@ -49,6 +50,12 @@ var KiChannel = class {
   }
   get chatroomId() {
     return this.info.chatroom.id;
+  }
+  get notified() {
+    return this.connectionNotified;
+  }
+  set notified(value) {
+    this.connectionNotified = value;
   }
   static toLogin(channelName) {
     let name = channelName.trim().toLowerCase();
@@ -100,8 +107,13 @@ var parseJSON = (json) => {
   reconnectMaxTimeout;
   channels = /* @__PURE__ */ new Map();
   channelsByChatroomId = /* @__PURE__ */ new Map();
+  subscribePusher;
   constructor(options = {}) {
-    super(), this.reconnectEnabled = options.reconnect ?? !0, this.reconnectMaxAttempts = options.reconnectMaxAttempts ?? 1 / 0, this.reconnectInitialTimeout = options.reconnectInitialTimeout ?? 1e3, this.reconnectMaxTimeout = options.reconnectMaxTimeout ?? 6e4, options.channels && options.channels.forEach((channel) => this.join(channel));
+    super(), this.reconnectEnabled = options.reconnect ?? !0, this.reconnectMaxAttempts = options?.reconnectMaxAttempts ?? 1 / 0, this.reconnectInitialTimeout = options?.reconnectInitialTimeout ?? 1e3, this.reconnectMaxTimeout = options?.reconnectMaxTimeout ?? 6e4, this.subscribePusher = options?.subscribePusher ?? {
+      channel: !0,
+      chatRoom: !0,
+      predictions: !0
+    }, options.channels && options.channels.forEach((channel) => this.join(channel));
   }
   isConnected() {
     return this.socket?.readyState === 1;
@@ -153,10 +165,12 @@ var parseJSON = (json) => {
     if (!messageEvent) return;
     let channel;
     if (messageEvent.channel) {
-      let match = messageEvent.channel.match(/^chatrooms\.(\d+)\.v2$/);
+      let match = messageEvent.channel.match(/(\d{5,})/);
       if (match) {
-        let chatroomId = parseInt(match[1], 10);
-        channel = this.channelsByChatroomId.get(chatroomId);
+        let roomId = parseInt(match[1], 10);
+        Array.from(this.channelsByChatroomId.entries()).forEach(([_, ch]) => {
+          (ch.chatroomId == roomId || ch.id == roomId) && (channel = this.channelsByChatroomId.get(ch.chatroomId));
+        });
       }
     }
     switch (messageEvent.event) {
@@ -166,7 +180,7 @@ var parseJSON = (json) => {
         break;
       }
       case "pusher_internal:subscription_succeeded": {
-        channel && this.emit("join", channel);
+        channel?.notified == !1 && (this.channels.get(channel.slug).notified = !0, this.emit("join", channel));
         break;
       }
       case "pusher:pong":
@@ -319,7 +333,7 @@ var parseJSON = (json) => {
     }, this.socketSession.activity_timeout * 1e3);
   }
   subscribeToChannel(channel) {
-    this.sendPusher(`chatrooms.${channel.chatroomId}.v2`), this.sendPusher(`chatroom_${channel.chatroomId}`), this.sendPusher(`channel_${channel.id}`), this.sendPusher(`channel.${channel.id}`), this.sendPusher(`predictions-channel-${channel.id}`);
+    this.subscribePusher?.chatRoom == !0 && this.sendPusher(`chatrooms.${channel.chatroomId}.v2`), this.subscribePusher?.chatRoom == !0 && this.sendPusher(`chatroom_${channel.chatroomId}`), this.subscribePusher?.channel == !0 && this.sendPusher(`channel_${channel.id}`), this.subscribePusher?.channel == !0 && this.sendPusher(`channel.${channel.id}`), this.subscribePusher?.predictions == !0 && this.sendPusher(`predictions-channel-${channel.id}`);
   }
   async fetchUserInfo(channelName) {
     let normalizedName = KiChannel.toLogin(channelName), infoRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/info`, { cache: "no-cache" });
@@ -350,7 +364,7 @@ var parseJSON = (json) => {
   }
   leave(channelName) {
     let normalizedName = KiChannel.toLogin(channelName), channel = this.channels.get(normalizedName);
-    channel && (this.isConnected() && (this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, "unsubscribe"), this.sendPusher(`chatroom_${channel.chatroomId}`, "unsubscribe"), this.sendPusher(`channel_${channel.id}`, "unsubscribe"), this.sendPusher(`channel.${channel.id}`, "unsubscribe"), this.sendPusher(`predictions-channel-${channel.id}`, "unsubscribe")), this.channels.delete(normalizedName), this.channelsByChatroomId.delete(channel.chatroomId), this.emit("leave", channel, "Disconnected by user"));
+    channel && (this.isConnected() && (this.subscribePusher?.chatRoom == !0 && this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, "unsubscribe"), this.subscribePusher?.chatRoom == !0 && this.sendPusher(`chatroom_${channel.chatroomId}`, "unsubscribe"), this.subscribePusher?.channel == !0 && this.sendPusher(`channel_${channel.id}`, "unsubscribe"), this.subscribePusher?.channel == !0 && this.sendPusher(`channel.${channel.id}`, "unsubscribe"), this.subscribePusher?.predictions == !0 && this.sendPusher(`predictions-channel-${channel.id}`, "unsubscribe")), this.channels.delete(normalizedName), this.channelsByChatroomId.delete(channel.chatroomId), this.emit("leave", channel, "Disconnected by user"));
   }
   waitForEvent(event, filter, timeoutMs = 1e4) {
     return new Promise((resolve, reject) => {

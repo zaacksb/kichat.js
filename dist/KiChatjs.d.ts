@@ -9,6 +9,11 @@ export interface ClientOptions {
     reconnectMaxAttempts?: number;
     reconnectInitialTimeout?: number;
     reconnectMaxTimeout?: number;
+    subscribePusher?: {
+        chatRoom?: boolean;
+        channel?: boolean;
+        predictions?: boolean;
+    };
 }
 export type ConnectionEvents = {
     connected: [];
@@ -65,6 +70,7 @@ export declare class KiChatjs extends EventEmitter<ClientEvents> {
     private reconnectMaxTimeout;
     channels: Map<string, KiChannel>;
     channelsByChatroomId: Map<number, KiChannel>;
+    private subscribePusher;
     constructor(options?: ClientOptions);
     isConnected(): this is {
         socket: WebSocket & {

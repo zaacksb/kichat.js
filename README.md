@@ -73,6 +73,7 @@ Creates a new client instance.
 - `reconnectMaxAttempts` (number, optional, default: `Infinity`): Maximum number of reconnection attempts.
 - `reconnectInitialTimeout` (number, optional, default: `1000`): The initial time to wait in milliseconds before the first reconnection attempt.
 - `reconnectMaxTimeout` (number, optional, default: `60000`): The maximum time to wait in milliseconds between reconnection attempts.
+- `subscribePusher` ({ channel: boolean, chatRoom: boolean, predictions: boolean }, optional, default: `true`): With this you can choose which events you want to connect in the pusher, if you only want chat messages you can enable only the chatRoom
 
 ### Methods
 

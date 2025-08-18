@@ -40,6 +40,7 @@ var require_browser = __commonJS({
 var KiChannel = class {
   info;
   chatroom;
+  connectionNotified = false;
   constructor(info, chatroom) {
     this.info = info;
     this.chatroom = chatroom;
@@ -55,6 +56,12 @@ var KiChannel = class {
   }
   get chatroomId() {
     return this.info.chatroom.id;
+  }
+  get notified() {
+    return this.connectionNotified;
+  }
+  set notified(value) {
+    this.connectionNotified = value;
   }
   static toLogin(channelName) {
     const name = channelName.trim().toLowerCase();
@@ -120,12 +127,18 @@ var KiChatjs = class extends EventEmitter {
   reconnectMaxTimeout;
   channels = /* @__PURE__ */ new Map();
   channelsByChatroomId = /* @__PURE__ */ new Map();
+  subscribePusher;
   constructor(options = {}) {
     super();
     this.reconnectEnabled = options.reconnect ?? true;
-    this.reconnectMaxAttempts = options.reconnectMaxAttempts ?? Infinity;
-    this.reconnectInitialTimeout = options.reconnectInitialTimeout ?? 1e3;
-    this.reconnectMaxTimeout = options.reconnectMaxTimeout ?? 6e4;
+    this.reconnectMaxAttempts = options?.reconnectMaxAttempts ?? Infinity;
+    this.reconnectInitialTimeout = options?.reconnectInitialTimeout ?? 1e3;
+    this.reconnectMaxTimeout = options?.reconnectMaxTimeout ?? 6e4;
+    this.subscribePusher = options?.subscribePusher ?? {
+      channel: true,
+      chatRoom: true,
+      predictions: true
+    };
     if (options.channels) {
       options.channels.forEach((channel) => this.join(channel));
     }
@@ -205,10 +218,13 @@ var KiChatjs = class extends EventEmitter {
     if (!messageEvent) return;
     let channel;
     if (messageEvent.channel) {
-      const match = messageEvent.channel.match(/^chatrooms\.(\d+)\.v2$/);
+      const match = messageEvent.channel.match(/(\d{5,})/);
       if (match) {
-        const chatroomId = parseInt(match[1], 10);
-        channel = this.channelsByChatroomId.get(chatroomId);
+        const roomId = parseInt(match[1], 10);
+        Array.from(this.channelsByChatroomId.entries()).forEach(([_, ch]) => {
+          if (ch.chatroomId == roomId || ch.id == roomId)
+            channel = this.channelsByChatroomId.get(ch.chatroomId);
+        });
       }
     }
     switch (messageEvent.event) {
@@ -222,7 +238,8 @@ var KiChatjs = class extends EventEmitter {
         break;
       }
       case "pusher_internal:subscription_succeeded": {
-        if (channel) {
+        if (channel?.notified == false) {
+          this.channels.get(channel.slug).notified = true;
           this.emit("join", channel);
         }
         break;
@@ -387,11 +404,11 @@ var KiChatjs = class extends EventEmitter {
     }, this.socketSession.activity_timeout * 1e3);
   }
   subscribeToChannel(channel) {
-    this.sendPusher(`chatrooms.${channel.chatroomId}.v2`);
-    this.sendPusher(`chatroom_${channel.chatroomId}`);
-    this.sendPusher(`channel_${channel.id}`);
-    this.sendPusher(`channel.${channel.id}`);
-    this.sendPusher(`predictions-channel-${channel.id}`);
+    if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`);
+    if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`);
+    if (this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`);
+    if (this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`);
+    if (this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`);
   }
   async fetchUserInfo(channelName) {
     const normalizedName = KiChannel.toLogin(channelName);
@@ -421,7 +438,9 @@ var KiChatjs = class extends EventEmitter {
       if (this.isConnected()) {
         this.subscribeToChannel(channel);
       }
-      const joinedChannel = await this.waitForEvent("join", (ch) => ch.slug === normalizedName);
+      const joinedChannel = await this.waitForEvent("join", (ch) => {
+        return ch.slug === normalizedName;
+      });
       return joinedChannel;
     } catch (error) {
       this.channels.delete(normalizedName);
@@ -438,11 +457,11 @@ var KiChatjs = class extends EventEmitter {
     const channel = this.channels.get(normalizedName);
     if (channel) {
       if (this.isConnected()) {
-        this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, "unsubscribe");
-        this.sendPusher(`chatroom_${channel.chatroomId}`, "unsubscribe");
-        this.sendPusher(`channel_${channel.id}`, "unsubscribe");
-        this.sendPusher(`channel.${channel.id}`, "unsubscribe");
-        this.sendPusher(`predictions-channel-${channel.id}`, "unsubscribe");
+        if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, "unsubscribe");
+        if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`, "unsubscribe");
+        if (this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`, "unsubscribe");
+        if (this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`, "unsubscribe");
+        if (this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`, "unsubscribe");
       }
       this.channels.delete(normalizedName);
       this.channelsByChatroomId.delete(channel.chatroomId);

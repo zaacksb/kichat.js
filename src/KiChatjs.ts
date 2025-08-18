@@ -18,6 +18,11 @@ export interface ClientOptions {
   reconnectMaxAttempts?: number;
   reconnectInitialTimeout?: number;
   reconnectMaxTimeout?: number;
+  subscribePusher?: {
+    chatRoom?: boolean,
+    channel?: boolean
+    predictions?: boolean
+  }
 }
 
 export type ConnectionEvents = {
@@ -80,13 +85,18 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
   public channels = new Map<string, KiChannel>();
   public channelsByChatroomId = new Map<number, KiChannel>();
 
+  private subscribePusher: ClientOptions['subscribePusher']
   constructor(options: ClientOptions = {}) {
     super();
     this.reconnectEnabled = options.reconnect ?? true;
-    this.reconnectMaxAttempts = options.reconnectMaxAttempts ?? Infinity;
-    this.reconnectInitialTimeout = options.reconnectInitialTimeout ?? 1000;
-    this.reconnectMaxTimeout = options.reconnectMaxTimeout ?? 60000;
-
+    this.reconnectMaxAttempts = options?.reconnectMaxAttempts ?? Infinity;
+    this.reconnectInitialTimeout = options?.reconnectInitialTimeout ?? 1000;
+    this.reconnectMaxTimeout = options?.reconnectMaxTimeout ?? 60000;
+    this.subscribePusher = options?.subscribePusher ?? {
+      channel: true,
+      chatRoom: true,
+      predictions: true
+    }
     if (options.channels) {
       options.channels.forEach(channel => this.join(channel));
     }
@@ -180,10 +190,13 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
 
     let channel: KiChannel | undefined;
     if (messageEvent.channel) {
-      const match = messageEvent.channel.match(/^chatrooms\.(\d+)\.v2$/);
+      const match = messageEvent.channel.match(/(\d{5,})/);
       if (match) {
-        const chatroomId = parseInt(match[1], 10);
-        channel = this.channelsByChatroomId.get(chatroomId);
+        const roomId = parseInt(match[1], 10);
+        Array.from(this.channelsByChatroomId.entries()).forEach(([_, ch]) => {
+          if(ch.chatroomId == roomId || ch.id == roomId)
+            channel = this.channelsByChatroomId.get(ch.chatroomId);
+        })
       }
     }
 
@@ -198,7 +211,8 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
         break;
       }
       case "pusher_internal:subscription_succeeded": {
-        if (channel) {
+        if (channel?.notified == false) {
+          this.channels.get(channel.slug)!.notified = true
           this.emit('join', channel);
         }
         break;
@@ -368,11 +382,11 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
   }
 
   private subscribeToChannel(channel: KiChannel) {
-    this.sendPusher(`chatrooms.${channel.chatroomId}.v2`);
-    this.sendPusher(`chatroom_${channel.chatroomId}`);
-    this.sendPusher(`channel_${channel.id}`);
-    this.sendPusher(`channel.${channel.id}`);
-    this.sendPusher(`predictions-channel-${channel.id}`);
+    if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`);
+    if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`);
+    if(this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`);
+    if(this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`);
+    if(this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`);
   }
 
   public async fetchUserInfo(channelName: string) {
@@ -410,7 +424,9 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
       }
 
       // Wait for the join event as confirmation
-      const joinedChannel = await this.waitForEvent('join', (ch) => ch.slug === normalizedName);
+      const joinedChannel = await this.waitForEvent('join', (ch) => {
+        return ch.slug === normalizedName
+      });
       return joinedChannel;
 
     } catch (error) {
@@ -431,11 +447,11 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
     const channel = this.channels.get(normalizedName);
     if (channel) {
       if (this.isConnected()) {
-        this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, 'unsubscribe');
-        this.sendPusher(`chatroom_${channel.chatroomId}`, 'unsubscribe');
-        this.sendPusher(`channel_${channel.id}`, 'unsubscribe');
-        this.sendPusher(`channel.${channel.id}`, 'unsubscribe');
-        this.sendPusher(`predictions-channel-${channel.id}`, 'unsubscribe');
+        if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, 'unsubscribe');
+        if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`, 'unsubscribe');
+        if(this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`, 'unsubscribe');
+        if(this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`, 'unsubscribe');
+        if(this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`, 'unsubscribe');
       }
       this.channels.delete(normalizedName);
       this.channelsByChatroomId.delete(channel.chatroomId);
@@ -451,18 +467,18 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
     return new Promise((resolve, reject) => {
       const listener = (...args: ClientEvents[T]) => {
         if (filter(...args)) {
-          this.off(event, listener as any);
+          this.off(event, listener);
           clearTimeout(timeout);
           resolve(args[0]);
         }
       };
 
       const timeout = setTimeout(() => {
-        this.off(event, listener as any);
+        this.off(event, listener);
         reject(new Error(`Timed out waiting for event: ${event}`));
       }, timeoutMs);
 
-      this.on(event, listener as any);
+      this.on(event, listener);
     });
   }
 }
