@@ -321,16 +321,26 @@ var parseJSON = (json) => {
   subscribeToChannel(channel) {
     this.sendPusher(`chatrooms.${channel.chatroomId}.v2`), this.sendPusher(`chatroom_${channel.chatroomId}`), this.sendPusher(`channel_${channel.id}`), this.sendPusher(`channel.${channel.id}`), this.sendPusher(`predictions-channel-${channel.id}`);
   }
+  async fetchUserInfo(channelName) {
+    let normalizedName = KiChannel.toLogin(channelName), infoRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/info`, { cache: "no-cache" });
+    if (infoRes.ok)
+      return await infoRes.json();
+  }
+  async fetchChatRoom(channelName) {
+    let normalizedName = KiChannel.toLogin(channelName), infoRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/info`, { cache: "no-cache" });
+    if (infoRes.ok)
+      return await infoRes.json();
+  }
   async join(channelName) {
     let normalizedName = KiChannel.toLogin(channelName);
     if (this.channels.has(normalizedName))
       return this.channels.get(normalizedName);
     try {
-      let infoRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/info`, { cache: "no-cache" });
-      if (!infoRes.ok) throw new Error(`Failed to fetch channel info for ${normalizedName}: ${infoRes.statusText}`);
-      let infoData = await infoRes.json(), chatroomRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/chatroom`, { cache: "no-cache" });
-      if (!chatroomRes.ok) throw new Error(`Failed to fetch chatroom info for ${normalizedName}: ${chatroomRes.statusText}`);
-      let chatroomData = await chatroomRes.json(), channel = new KiChannel(infoData, chatroomData);
+      let infoData = await this.fetchUserInfo(normalizedName);
+      if (!infoData) throw new Error(`Failed to fetch channel info for ${normalizedName}`);
+      let chatroomData = await this.fetchChatRoom(normalizedName);
+      if (!chatroomData) throw new Error(`Failed to fetch chatroom info for ${normalizedName}`);
+      let channel = new KiChannel(infoData, chatroomData);
       return this.channels.set(normalizedName, channel), this.channelsByChatroomId.set(channel.chatroomId, channel), this.isConnected() && this.subscribeToChannel(channel), await this.waitForEvent("join", (ch) => ch.slug === normalizedName);
     } catch (error) {
       this.channels.delete(normalizedName);

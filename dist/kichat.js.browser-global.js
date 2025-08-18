@@ -408,18 +408,28 @@ var kichat = (() => {
       this.sendPusher(`channel.${channel.id}`);
       this.sendPusher(`predictions-channel-${channel.id}`);
     }
+    async fetchUserInfo(channelName) {
+      const normalizedName = KiChannel.toLogin(channelName);
+      const infoRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/info`, { cache: "no-cache" });
+      if (!infoRes.ok) return;
+      return await infoRes.json();
+    }
+    async fetchChatRoom(channelName) {
+      const normalizedName = KiChannel.toLogin(channelName);
+      const infoRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/info`, { cache: "no-cache" });
+      if (!infoRes.ok) return;
+      return await infoRes.json();
+    }
     async join(channelName) {
       const normalizedName = KiChannel.toLogin(channelName);
       if (this.channels.has(normalizedName)) {
         return this.channels.get(normalizedName);
       }
       try {
-        const infoRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/info`, { cache: "no-cache" });
-        if (!infoRes.ok) throw new Error(`Failed to fetch channel info for ${normalizedName}: ${infoRes.statusText}`);
-        const infoData = await infoRes.json();
-        const chatroomRes = await fetch(`https://kick.com/api/v2/channels/${normalizedName}/chatroom`, { cache: "no-cache" });
-        if (!chatroomRes.ok) throw new Error(`Failed to fetch chatroom info for ${normalizedName}: ${chatroomRes.statusText}`);
-        const chatroomData = await chatroomRes.json();
+        const infoData = await this.fetchUserInfo(normalizedName);
+        if (!infoData) throw new Error(`Failed to fetch channel info for ${normalizedName}`);
+        const chatroomData = await this.fetchChatRoom(normalizedName);
+        if (!chatroomData) throw new Error(`Failed to fetch chatroom info for ${normalizedName}`);
         const channel = new KiChannel(infoData, chatroomData);
         this.channels.set(normalizedName, channel);
         this.channelsByChatroomId.set(channel.chatroomId, channel);

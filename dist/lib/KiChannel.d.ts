@@ -2,6 +2,56 @@ export interface BannerImage {
     src: string;
     srcset: string;
 }
+export interface CategoriesInfo {
+    id: number;
+    category_id: number;
+    name: string;
+    slug: string;
+    tags: string[];
+    description: string;
+    deleted_at: null | String;
+    is_mature: boolean;
+    is_promoted: boolean;
+    viewers: number;
+    is_fallback: boolean;
+    category: {
+        id: number;
+        name: string;
+        slug: string;
+        icon: string;
+    };
+}
+export interface LiveStreamInfo {
+    id: number;
+    slug: string;
+    channel_id: number;
+    created_at: `${number}-${number}-${number} ${number}:${number}:${number}`;
+    session_title: string;
+    is_live: boolean;
+    risk_level_id: null;
+    start_time: `${number}-${number}-${number} ${number}:${number}:${number}`;
+    source: null;
+    twitch_channel: null;
+    duration: number;
+    language: string;
+    is_mature: boolean;
+    viewer_count: number;
+    tags: string[];
+    thumbnail: {
+        responsive: string;
+        url: string;
+    };
+    categories: CategoriesInfo[];
+}
+export interface SubscriberBadgesInfo {
+    id: number;
+    channel_id: number;
+    months: number;
+    badge_image: {
+        srcset: string;
+        src: string;
+    };
+}
 export interface ChannelInfo {
     id: number;
     slug: string;
@@ -10,10 +60,10 @@ export interface ChannelInfo {
     playback_url: string;
     followers_count: number;
     subscription_enabled: boolean;
-    livestream: any | null;
+    livestream: LiveStreamInfo;
     banner_image: BannerImage | null;
     offline_banner_image: BannerImage | null;
-    subscriber_badges: any[];
+    subscriber_badges: SubscriberBadgesInfo;
     user: {
         bio: string | null;
         username: string;

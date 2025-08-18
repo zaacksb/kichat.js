@@ -1,5 +1,5 @@
 import EventEmitter from "./lib/EventEmitter";
-import { KiChannel } from "./lib/KiChannel";
+import { KiChannel, ChannelInfo, ChatroomInfo } from "./lib/KiChannel";
 import * as KickEvents from "./types/events";
 import type { WebSocket as NodeWebSocket } from 'ws';
 export declare const parseJSON: <T>(json: string) => T | null;
@@ -82,6 +82,8 @@ export declare class KiChatjs extends EventEmitter<ClientEvents> {
     private sendPusher;
     private startPing;
     private subscribeToChannel;
+    fetchUserInfo(channelName: string): Promise<ChannelInfo | undefined>;
+    fetchChatRoom(channelName: string): Promise<ChatroomInfo | undefined>;
     join(channelName: string): Promise<KiChannel>;
     leave(channelName: string): void;
     private waitForEvent;
