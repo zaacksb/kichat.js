@@ -88,6 +88,11 @@ Creates a new client instance.
 - **`.leave(channelName)`**: Leaves a chat channel.
   - `channelName` (string): The slug of the channel to leave from.
 
+- **`.fetchUserInfo(channelName)`**: Get user data from api.
+  - `channelName` (string): The slug of the channel to fetch.
+
+- **`.fetchChatRoom(channelName)`**: Get chat room data from api.
+  - `channelName` (string): The slug of the channel to fetch.
 ### Events
 
 Listen to events using `client.on('eventName', (arg1, arg2, ...) => { ... });`
