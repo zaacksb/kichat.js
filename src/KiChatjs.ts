@@ -126,6 +126,7 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
     if (typeof window !== 'undefined' && typeof window.WebSocket !== 'undefined') {
       // Browser environment
       this.socket = new window.WebSocket(url);
+      this.socket.onerror = (_err) => {}
       this.socket.onopen = () => this.onSocketOpen();
       this.socket.onmessage = (event) => this.onSocketMessage(event.data);
       this.socket.onclose = (event) => this.onSocketClose(event.code, event.reason);
@@ -133,11 +134,12 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
     } else {
       // Node.js environment
       const { default: NodeWebSocket } = await import('ws');
-      this.socket = new NodeWebSocket(url);
-      this.socket.on('open', () => this.onSocketOpen());
-      this.socket.on('message', (data) => this.onSocketMessage(data));
-      this.socket.on('close', (code, reason) => this.onSocketClose(code, reason.toString()));
-      this.socket.on('socketError', (error) => this.onSocketError(error));
+        this.socket = new NodeWebSocket(url)
+        this.socket.onerror = (_err) => {}
+        this.socket.on('open', () => this.onSocketOpen());
+        this.socket.on('message', (data) => this.onSocketMessage(data));
+        this.socket.on('close', (code, reason) => this.onSocketClose(code, reason.toString()));
+        this.socket.on('socketError', (error) => this.onSocketError(error));
     }
   }
 
@@ -194,7 +196,7 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
       if (match) {
         const roomId = parseInt(match[1], 10);
         Array.from(this.channelsByChatroomId.entries()).forEach(([_, ch]) => {
-          if(ch.chatroomId == roomId || ch.id == roomId)
+          if (ch.chatroomId == roomId || ch.id == roomId)
             channel = this.channelsByChatroomId.get(ch.chatroomId);
         })
       }
@@ -382,11 +384,11 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
   }
 
   private subscribeToChannel(channel: KiChannel) {
-    if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`);
-    if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`);
-    if(this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`);
-    if(this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`);
-    if(this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`);
+    if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`);
+    if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`);
+    if (this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`);
+    if (this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`);
+    if (this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`);
   }
 
   public async fetchUserInfo(channelName: string) {
@@ -413,7 +415,7 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
       if (!infoData) throw new Error(`Failed to fetch channel info for ${normalizedName}`);
 
       const chatroomData = await this.fetchChatRoom(normalizedName)
-      if(!chatroomData) throw new Error(`Failed to fetch chatroom info for ${normalizedName}`);
+      if (!chatroomData) throw new Error(`Failed to fetch chatroom info for ${normalizedName}`);
       const channel = new KiChannel(infoData, chatroomData);
 
       this.channels.set(normalizedName, channel);
@@ -447,11 +449,11 @@ export class KiChatjs extends EventEmitter<ClientEvents> {
     const channel = this.channels.get(normalizedName);
     if (channel) {
       if (this.isConnected()) {
-        if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, 'unsubscribe');
-        if(this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`, 'unsubscribe');
-        if(this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`, 'unsubscribe');
-        if(this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`, 'unsubscribe');
-        if(this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`, 'unsubscribe');
+        if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatrooms.${channel.chatroomId}.v2`, 'unsubscribe');
+        if (this.subscribePusher?.chatRoom == true) this.sendPusher(`chatroom_${channel.chatroomId}`, 'unsubscribe');
+        if (this.subscribePusher?.channel == true) this.sendPusher(`channel_${channel.id}`, 'unsubscribe');
+        if (this.subscribePusher?.channel == true) this.sendPusher(`channel.${channel.id}`, 'unsubscribe');
+        if (this.subscribePusher?.predictions == true) this.sendPusher(`predictions-channel-${channel.id}`, 'unsubscribe');
       }
       this.channels.delete(normalizedName);
       this.channelsByChatroomId.delete(channel.chatroomId);

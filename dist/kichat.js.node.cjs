@@ -131,10 +131,12 @@ var parseJSON = (json) => {
       flash: "false"
     }), url = `${BASE_URL}?${urlParams.toString()}`;
     if (typeof window < "u" && typeof window.WebSocket < "u")
-      this.socket = new window.WebSocket(url), this.socket.onopen = () => this.onSocketOpen(), this.socket.onmessage = (event) => this.onSocketMessage(event.data), this.socket.onclose = (event) => this.onSocketClose(event.code, event.reason), this.socket.onerror = () => this.onSocketError(new Error("WebSocket error"));
+      this.socket = new window.WebSocket(url), this.socket.onerror = (_err) => {
+      }, this.socket.onopen = () => this.onSocketOpen(), this.socket.onmessage = (event) => this.onSocketMessage(event.data), this.socket.onclose = (event) => this.onSocketClose(event.code, event.reason), this.socket.onerror = () => this.onSocketError(new Error("WebSocket error"));
     else {
       let { default: NodeWebSocket } = await import("ws");
-      this.socket = new NodeWebSocket(url), this.socket.on("open", () => this.onSocketOpen()), this.socket.on("message", (data) => this.onSocketMessage(data)), this.socket.on("close", (code, reason) => this.onSocketClose(code, reason.toString())), this.socket.on("socketError", (error) => this.onSocketError(error));
+      this.socket = new NodeWebSocket(url), this.socket.onerror = (_err) => {
+      }, this.socket.on("open", () => this.onSocketOpen()), this.socket.on("message", (data) => this.onSocketMessage(data)), this.socket.on("close", (code, reason) => this.onSocketClose(code, reason.toString())), this.socket.on("socketError", (error) => this.onSocketError(error));
     }
   }
   close() {

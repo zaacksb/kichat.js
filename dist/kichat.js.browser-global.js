@@ -178,6 +178,8 @@ var kichat = (() => {
       const url = `${BASE_URL}?${urlParams.toString()}`;
       if (typeof window !== "undefined" && typeof window.WebSocket !== "undefined") {
         this.socket = new window.WebSocket(url);
+        this.socket.onerror = (_err) => {
+        };
         this.socket.onopen = () => this.onSocketOpen();
         this.socket.onmessage = (event) => this.onSocketMessage(event.data);
         this.socket.onclose = (event) => this.onSocketClose(event.code, event.reason);
@@ -185,6 +187,8 @@ var kichat = (() => {
       } else {
         const { default: NodeWebSocket } = await Promise.resolve().then(() => __toESM(require_browser(), 1));
         this.socket = new NodeWebSocket(url);
+        this.socket.onerror = (_err) => {
+        };
         this.socket.on("open", () => this.onSocketOpen());
         this.socket.on("message", (data) => this.onSocketMessage(data));
         this.socket.on("close", (code, reason) => this.onSocketClose(code, reason.toString()));
